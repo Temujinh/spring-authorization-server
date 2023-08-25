@@ -45,6 +45,8 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationException;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextResolver;
+import org.springframework.security.oauth2.server.authorization.context.DefaultAuthorizationServerContextResolver;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.security.oauth2.server.authorization.web.NimbusJwkSetEndpointFilter;
@@ -85,6 +87,7 @@ public final class OAuth2AuthorizationServerConfigurer
 
 	private final Map<Class<? extends AbstractOAuth2Configurer>, AbstractOAuth2Configurer> configurers = createConfigurers();
 	private RequestMatcher endpointsMatcher;
+	private AuthorizationServerContextResolver authorizationServerContextResolver;
 
 
 	/**
@@ -145,6 +148,18 @@ public final class OAuth2AuthorizationServerConfigurer
 	public OAuth2AuthorizationServerConfigurer tokenGenerator(OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator) {
 		Assert.notNull(tokenGenerator, "tokenGenerator cannot be null");
 		getBuilder().setSharedObject(OAuth2TokenGenerator.class, tokenGenerator);
+		return this;
+	}
+
+	/**
+	 * Sets the authorization server context resolver
+	 *
+	 * @param authorizationServerContextResolver the authorization server context resolver
+	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
+	 */
+	public OAuth2AuthorizationServerConfigurer authorizationServerContextResolver(AuthorizationServerContextResolver authorizationServerContextResolver) {
+		Assert.notNull(authorizationServerContextResolver, "authorizationServerContextResolver cannot be null");
+		this.authorizationServerContextResolver = authorizationServerContextResolver;
 		return this;
 	}
 
@@ -336,7 +351,11 @@ public final class OAuth2AuthorizationServerConfigurer
 
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
 
-		AuthorizationServerContextFilter authorizationServerContextFilter = new AuthorizationServerContextFilter(authorizationServerSettings);
+		AuthorizationServerContextResolver authServerContextResolver = this.authorizationServerContextResolver == null
+				? new DefaultAuthorizationServerContextResolver(authorizationServerSettings)
+				: this.authorizationServerContextResolver;
+
+		AuthorizationServerContextFilter authorizationServerContextFilter = new AuthorizationServerContextFilter(authServerContextResolver);
 		httpSecurity.addFilterAfter(postProcess(authorizationServerContextFilter), SecurityContextHolderFilter.class);
 
 		JWKSource<com.nimbusds.jose.proc.SecurityContext> jwkSource = OAuth2ConfigurerUtils.getJwkSource(httpSecurity);
