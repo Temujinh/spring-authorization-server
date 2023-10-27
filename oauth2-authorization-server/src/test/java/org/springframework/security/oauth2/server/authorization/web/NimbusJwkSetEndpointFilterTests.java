@@ -37,6 +37,7 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.oauth2.jose.TestJwks;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -72,9 +73,16 @@ public class NimbusJwkSetEndpointFilterTests {
 
 	@Test
 	public void constructorWhenJwkSetEndpointUriNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new NimbusJwkSetEndpointFilter(this.jwkSource, null))
+		assertThatThrownBy(() -> new NimbusJwkSetEndpointFilter(this.jwkSource, (String) null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("jwkSetEndpointUri cannot be empty");
+	}
+
+	@Test
+	public void constructorWhenJwkSetEndpointMatcherNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> new NimbusJwkSetEndpointFilter(this.jwkSource, (RequestMatcher) null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("requestMatcher cannot be null");
 	}
 
 	@Test

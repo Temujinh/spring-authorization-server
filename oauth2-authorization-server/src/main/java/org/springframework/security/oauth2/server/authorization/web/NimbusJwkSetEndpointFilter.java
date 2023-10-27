@@ -18,10 +18,12 @@ package org.springframework.security.oauth2.server.authorization.web;
 import java.io.IOException;
 import java.io.Writer;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.util.Assert;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.nimbusds.jose.jwk.JWKMatcher;
 import com.nimbusds.jose.jwk.JWKSelector;
@@ -29,12 +31,10 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.security.web.util.matcher.RequestMatcher;
-import org.springframework.util.Assert;
-import org.springframework.web.filter.OncePerRequestFilter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * A {@code Filter} that processes JWK Set requests.
@@ -70,11 +70,27 @@ public final class NimbusJwkSetEndpointFilter extends OncePerRequestFilter {
 	 * @param jwkSetEndpointUri the endpoint {@code URI} for JWK Set requests
 	 */
 	public NimbusJwkSetEndpointFilter(JWKSource<SecurityContext> jwkSource, String jwkSetEndpointUri) {
+		this(jwkSource, createDefaultRequestMatcher(jwkSetEndpointUri));
+	}
+
+	/**
+	 * Constructs a {@code NimbusJwkSetEndpointFilter} using the provided parameters.
+	 *
+	 * @param jwkSource the {@code com.nimbusds.jose.jwk.source.JWKSource}
+	 * @param requestMatcher the endpoint matcher for JWK Set requests
+	 */
+	public NimbusJwkSetEndpointFilter(JWKSource<SecurityContext> jwkSource, RequestMatcher requestMatcher) {
 		Assert.notNull(jwkSource, "jwkSource cannot be null");
-		Assert.hasText(jwkSetEndpointUri, "jwkSetEndpointUri cannot be empty");
+		Assert.notNull(requestMatcher, "requestMatcher cannot be null");
 		this.jwkSource = jwkSource;
 		this.jwkSelector = new JWKSelector(new JWKMatcher.Builder().build());
-		this.requestMatcher = new AntPathRequestMatcher(jwkSetEndpointUri, HttpMethod.GET.name());
+		this.requestMatcher = requestMatcher;
+	}
+
+	public static RequestMatcher createDefaultRequestMatcher(String jwkSetEndpointUri) {
+		Assert.hasText(jwkSetEndpointUri, "jwkSetEndpointUri cannot be empty");
+
+		return new AntPathRequestMatcher(jwkSetEndpointUri, HttpMethod.GET.name());
 	}
 
 	@Override
