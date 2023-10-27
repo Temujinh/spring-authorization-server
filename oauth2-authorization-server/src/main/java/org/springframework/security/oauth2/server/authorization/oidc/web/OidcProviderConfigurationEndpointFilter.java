@@ -54,17 +54,14 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationRequest">4.1. OpenID Provider Configuration Request</a>
  */
 public final class OidcProviderConfigurationEndpointFilter extends OncePerRequestFilter {
-	/**
-	 * The default endpoint {@code URI} for OpenID Provider Configuration requests.
-	 */
-	private static final String DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI = "/.well-known/openid-configuration";
-
-	private final RequestMatcher requestMatcher = new AntPathRequestMatcher(
-			DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI,
-			HttpMethod.GET.name());
+	private final RequestMatcher requestMatcher;
 	private final OidcProviderConfigurationHttpMessageConverter providerConfigurationHttpMessageConverter =
 			new OidcProviderConfigurationHttpMessageConverter();
 	private Consumer<OidcProviderConfiguration.Builder> providerConfigurationCustomizer = (providerConfiguration) -> {};
+
+	public OidcProviderConfigurationEndpointFilter(String configurationEndpointUri) {
+		requestMatcher = new AntPathRequestMatcher(configurationEndpointUri, HttpMethod.GET.name());
+	}
 
 	/**
 	 * Sets the {@code Consumer} providing access to the {@link OidcProviderConfiguration.Builder}
