@@ -90,12 +90,27 @@ public final class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequest
 	 */
 	public OAuth2TokenIntrospectionEndpointFilter(AuthenticationManager authenticationManager,
 			String tokenIntrospectionEndpointUri) {
+		this(authenticationManager, createDefaultRequestMatcher(tokenIntrospectionEndpointUri));
+	}
+
+	/**
+	 * Constructs an {@code OAuth2TokenIntrospectionEndpointFilter} using the provided parameters.
+	 *
+	 * @param authenticationManager the authentication manager
+	 * @param tokenIntrospectionEndpointMatcher the request matcher for token introspection requests
+	 */
+	public OAuth2TokenIntrospectionEndpointFilter(AuthenticationManager authenticationManager,
+			RequestMatcher tokenIntrospectionEndpointMatcher) {
 		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
-		Assert.hasText(tokenIntrospectionEndpointUri, "tokenIntrospectionEndpointUri cannot be empty");
+		Assert.notNull(tokenIntrospectionEndpointMatcher, "tokenIntrospectionEndpointMatcher cannot be null");
 		this.authenticationManager = authenticationManager;
-		this.tokenIntrospectionEndpointMatcher = new AntPathRequestMatcher(
-				tokenIntrospectionEndpointUri, HttpMethod.POST.name());
+		this.tokenIntrospectionEndpointMatcher = tokenIntrospectionEndpointMatcher;
 		this.authenticationConverter = new OAuth2TokenIntrospectionAuthenticationConverter();
+	}
+
+	public static RequestMatcher createDefaultRequestMatcher(String tokenIntrospectionEndpointUri) {
+		Assert.hasText(tokenIntrospectionEndpointUri, "tokenIntrospectionEndpointUri cannot be empty");
+		return new AntPathRequestMatcher(tokenIntrospectionEndpointUri, HttpMethod.POST.name());
 	}
 
 	@Override

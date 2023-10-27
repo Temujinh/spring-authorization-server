@@ -87,12 +87,27 @@ public final class OAuth2TokenRevocationEndpointFilter extends OncePerRequestFil
 	 */
 	public OAuth2TokenRevocationEndpointFilter(AuthenticationManager authenticationManager,
 			String tokenRevocationEndpointUri) {
+		this(authenticationManager,  createDefaultRequestMatcher(tokenRevocationEndpointUri));
+	}
+
+	/**
+	 * Constructs an {@code OAuth2TokenRevocationEndpointFilter} using the provided parameters.
+	 *
+	 * @param authenticationManager the authentication manager
+	 * @param tokenRevocationEndpointMatcher the request matcher for token revocation requests
+	 */
+	public OAuth2TokenRevocationEndpointFilter(AuthenticationManager authenticationManager,
+			RequestMatcher tokenRevocationEndpointMatcher) {
 		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
-		Assert.hasText(tokenRevocationEndpointUri, "tokenRevocationEndpointUri cannot be empty");
+		Assert.notNull(tokenRevocationEndpointMatcher, "tokenRevocationEndpointMatcher cannot be null");
 		this.authenticationManager = authenticationManager;
-		this.tokenRevocationEndpointMatcher = new AntPathRequestMatcher(
-				tokenRevocationEndpointUri, HttpMethod.POST.name());
+		this.tokenRevocationEndpointMatcher = tokenRevocationEndpointMatcher;
 		this.authenticationConverter = new OAuth2TokenRevocationAuthenticationConverter();
+	}
+
+	public static RequestMatcher createDefaultRequestMatcher(String tokenRevocationEndpointUri) {
+		Assert.hasText(tokenRevocationEndpointUri, "tokenRevocationEndpointUri cannot be empty");
+		return new AntPathRequestMatcher(tokenRevocationEndpointUri, HttpMethod.POST.name());
 	}
 
 	@Override

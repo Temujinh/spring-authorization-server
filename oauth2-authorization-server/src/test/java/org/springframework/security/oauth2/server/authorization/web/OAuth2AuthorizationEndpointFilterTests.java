@@ -59,6 +59,7 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.StringUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -119,9 +120,16 @@ public class OAuth2AuthorizationEndpointFilterTests {
 
 	@Test
 	public void constructorWhenAuthorizationEndpointUriNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2AuthorizationEndpointFilter(this.authenticationManager, null))
+		assertThatThrownBy(() -> new OAuth2AuthorizationEndpointFilter(this.authenticationManager, (String) null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("authorizationEndpointUri cannot be empty");
+	}
+
+	@Test
+	public void constructorWhenAuthorizationEndpointMatcherNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> new OAuth2AuthorizationEndpointFilter(this.authenticationManager, (RequestMatcher) null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("authorizationEndpointMatcher cannot be null");
 	}
 
 	@Test

@@ -53,6 +53,7 @@ import org.springframework.security.oauth2.server.authorization.client.TestRegis
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -95,9 +96,16 @@ public class OAuth2TokenRevocationEndpointFilterTests {
 
 	@Test
 	public void constructorWhenTokenRevocationEndpointUriNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2TokenRevocationEndpointFilter(this.authenticationManager, null))
+		assertThatThrownBy(() -> new OAuth2TokenRevocationEndpointFilter(this.authenticationManager, (String) null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("tokenRevocationEndpointUri cannot be empty");
+	}
+
+	@Test
+	public void constructorWhenTokenRevocationEndpointMatcherNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> new OAuth2TokenRevocationEndpointFilter(this.authenticationManager, (RequestMatcher) null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("tokenRevocationEndpointMatcher cannot be null");
 	}
 
 	@Test

@@ -19,9 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import jakarta.servlet.http.HttpServletRequest;
-
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
@@ -40,10 +37,11 @@ import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Configurer for the OAuth 2.0 Device Authorization Endpoint.
@@ -165,8 +163,8 @@ public final class OAuth2DeviceAuthorizationEndpointConfigurer extends AbstractO
 	public void init(HttpSecurity builder) {
 		AuthorizationServerSettings authorizationServerSettings =
 				OAuth2ConfigurerUtils.getAuthorizationServerSettings(builder);
-		this.requestMatcher = new AntPathRequestMatcher(
-				authorizationServerSettings.getDeviceAuthorizationEndpoint(), HttpMethod.POST.name());
+		this.requestMatcher = OAuth2DeviceAuthorizationEndpointFilter
+				.createDefaultRequestMatcher(authorizationServerSettings.getDeviceAuthorizationEndpoint());
 
 		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(builder);
 		if (!this.authenticationProviders.isEmpty()) {
@@ -180,11 +178,9 @@ public final class OAuth2DeviceAuthorizationEndpointConfigurer extends AbstractO
 	@Override
 	public void configure(HttpSecurity builder) {
 		AuthenticationManager authenticationManager = builder.getSharedObject(AuthenticationManager.class);
-		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(builder);
 
-		OAuth2DeviceAuthorizationEndpointFilter deviceAuthorizationEndpointFilter =
-				new OAuth2DeviceAuthorizationEndpointFilter(
-						authenticationManager, authorizationServerSettings.getDeviceAuthorizationEndpoint());
+		OAuth2DeviceAuthorizationEndpointFilter deviceAuthorizationEndpointFilter = new OAuth2DeviceAuthorizationEndpointFilter(
+				authenticationManager, getRequestMatcher());
 
 		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters();
 		if (!this.deviceAuthorizationRequestConverters.isEmpty()) {

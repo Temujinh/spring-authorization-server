@@ -100,12 +100,28 @@ public final class OidcClientRegistrationEndpointFilter extends OncePerRequestFi
 	 */
 	public OidcClientRegistrationEndpointFilter(AuthenticationManager authenticationManager,
 			String clientRegistrationEndpointUri) {
+		this(authenticationManager, createDefaultRequestMatcher(clientRegistrationEndpointUri));
+	}
+
+	/**
+	 * Constructs an {@code OidcClientRegistrationEndpointFilter} using the provided
+	 * parameters.
+	 *
+	 * @param authenticationManager             the authentication manager
+	 * @param clientRegistrationEndpointMatcher the request matcher for OpenID
+	 *                                          Client Registration requests
+	 */
+	public OidcClientRegistrationEndpointFilter(AuthenticationManager authenticationManager,
+			RequestMatcher clientRegistrationEndpointMatcher) {
 		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
-		Assert.hasText(clientRegistrationEndpointUri, "clientRegistrationEndpointUri cannot be empty");
+		Assert.notNull(clientRegistrationEndpointMatcher, "clientRegistrationEndpointMatcher cannot be null");
 		this.authenticationManager = authenticationManager;
-		this.clientRegistrationEndpointMatcher = new OrRequestMatcher(
-				new AntPathRequestMatcher(
-						clientRegistrationEndpointUri, HttpMethod.POST.name()),
+		this.clientRegistrationEndpointMatcher = clientRegistrationEndpointMatcher;
+	}
+
+	public static RequestMatcher createDefaultRequestMatcher(String clientRegistrationEndpointUri) {
+		Assert.hasText(clientRegistrationEndpointUri, "clientRegistrationEndpointUri cannot be empty");
+		return new OrRequestMatcher(new AntPathRequestMatcher(clientRegistrationEndpointUri, HttpMethod.POST.name()),
 				createClientConfigurationMatcher(clientRegistrationEndpointUri));
 	}
 

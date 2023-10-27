@@ -100,6 +100,25 @@ public final class OidcUserInfoEndpointFilter extends OncePerRequestFilter {
 				new AntPathRequestMatcher(userInfoEndpointUri, HttpMethod.POST.name()));
 	}
 
+	/**
+	 * Constructs an {@code OidcUserInfoEndpointFilter} using the provided parameters.
+	 *
+	 * @param authenticationManager the authentication manager
+	 * @param userInfoEndpointMatcher the request matcher for OpenID Connect 1.0 UserInfo Requests
+	 */
+	public OidcUserInfoEndpointFilter(AuthenticationManager authenticationManager, RequestMatcher userInfoEndpointMatcher) {
+		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
+		Assert.notNull(userInfoEndpointMatcher, "userInfoEndpointMatcher cannot be null");
+		this.authenticationManager = authenticationManager;
+		this.userInfoEndpointMatcher = userInfoEndpointMatcher;
+	}
+
+	public static RequestMatcher createDefaultRequestMatcher(String userInfoEndpointUri) {
+		Assert.hasText(userInfoEndpointUri, "userInfoEndpointUri cannot be empty");
+		return new OrRequestMatcher(new AntPathRequestMatcher(userInfoEndpointUri, HttpMethod.GET.name()),
+				new AntPathRequestMatcher(userInfoEndpointUri, HttpMethod.POST.name()));
+	}
+
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {

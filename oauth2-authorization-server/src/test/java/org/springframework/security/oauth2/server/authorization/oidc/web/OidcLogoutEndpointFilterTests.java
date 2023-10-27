@@ -46,6 +46,7 @@ import org.springframework.security.oauth2.server.authorization.oidc.authenticat
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -92,9 +93,16 @@ public class OidcLogoutEndpointFilterTests {
 
 	@Test
 	public void constructorWhenLogoutEndpointUriNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OidcLogoutEndpointFilter(this.authenticationManager, null))
+		assertThatThrownBy(() -> new OidcLogoutEndpointFilter(this.authenticationManager, (String) null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("logoutEndpointUri cannot be empty");
+	}
+
+	@Test
+	public void constructorWhenLogoutEndpointMatcherNullThenThrowIllegalArgumentException() {
+		assertThatThrownBy(() -> new OidcLogoutEndpointFilter(this.authenticationManager, (RequestMatcher) null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("logoutEndpointMatcher cannot be null");
 	}
 
 	@Test

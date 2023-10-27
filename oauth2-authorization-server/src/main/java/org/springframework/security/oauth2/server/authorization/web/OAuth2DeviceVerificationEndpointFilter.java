@@ -108,17 +108,28 @@ public final class OAuth2DeviceVerificationEndpointFilter extends OncePerRequest
 	 * @param deviceVerificationEndpointUri the endpoint {@code URI} for device verification requests
 	 */
 	public OAuth2DeviceVerificationEndpointFilter(AuthenticationManager authenticationManager, String deviceVerificationEndpointUri) {
+		this(authenticationManager, createDefaultRequestMatcher(deviceVerificationEndpointUri));
+	}
+
+	/**
+	 * Constructs an {@code OAuth2DeviceVerificationEndpointFilter} using the provided parameters.
+	 *
+	 * @param authenticationManager the authentication manager
+	 * @param deviceVerificationEndpointMatcher the request matcher for device verification requests
+	 */
+	public OAuth2DeviceVerificationEndpointFilter(AuthenticationManager authenticationManager, RequestMatcher deviceVerificationEndpointMatcher) {
 		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
-		Assert.hasText(deviceVerificationEndpointUri, "deviceVerificationEndpointUri cannot be empty");
+		Assert.notNull(deviceVerificationEndpointMatcher, "deviceVerificationEndpointMatcher cannot be null");
 		this.authenticationManager = authenticationManager;
-		this.deviceVerificationEndpointMatcher = createDefaultRequestMatcher(deviceVerificationEndpointUri);
+		this.deviceVerificationEndpointMatcher = deviceVerificationEndpointMatcher;
 		this.authenticationConverter = new DelegatingAuthenticationConverter(
 				Arrays.asList(
 						new OAuth2DeviceVerificationAuthenticationConverter(),
 						new OAuth2DeviceAuthorizationConsentAuthenticationConverter()));
 	}
 
-	private RequestMatcher createDefaultRequestMatcher(String deviceVerificationEndpointUri) {
+	public static RequestMatcher createDefaultRequestMatcher(String deviceVerificationEndpointUri) {
+		Assert.hasText(deviceVerificationEndpointUri, "deviceVerificationEndpointUri cannot be empty");
 		RequestMatcher verificationRequestGetMatcher = new AntPathRequestMatcher(
 				deviceVerificationEndpointUri, HttpMethod.GET.name());
 		RequestMatcher verificationRequestPostMatcher = new AntPathRequestMatcher(

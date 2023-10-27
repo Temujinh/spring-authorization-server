@@ -131,16 +131,31 @@ public final class OAuth2TokenEndpointFilter extends OncePerRequestFilter {
 	 * @param tokenEndpointUri the endpoint {@code URI} for access token requests
 	 */
 	public OAuth2TokenEndpointFilter(AuthenticationManager authenticationManager, String tokenEndpointUri) {
+		this(authenticationManager, createDefaultRequestMatcher(tokenEndpointUri));
+	}
+
+	/**
+	 * Constructs an {@code OAuth2TokenEndpointFilter} using the provided parameters.
+	 *
+	 * @param authenticationManager the authentication manager
+	 * @param tokenEndpointMatcher the request matcher for access token requests
+	 */
+	public OAuth2TokenEndpointFilter(AuthenticationManager authenticationManager, RequestMatcher tokenEndpointMatcher) {
 		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
-		Assert.hasText(tokenEndpointUri, "tokenEndpointUri cannot be empty");
+		Assert.notNull(tokenEndpointMatcher, "tokenEndpointMatcher cannot be null");
 		this.authenticationManager = authenticationManager;
-		this.tokenEndpointMatcher = new AntPathRequestMatcher(tokenEndpointUri, HttpMethod.POST.name());
+		this.tokenEndpointMatcher = tokenEndpointMatcher;
 		this.authenticationConverter = new DelegatingAuthenticationConverter(
 				Arrays.asList(
 						new OAuth2AuthorizationCodeAuthenticationConverter(),
 						new OAuth2RefreshTokenAuthenticationConverter(),
 						new OAuth2ClientCredentialsAuthenticationConverter(),
 						new OAuth2DeviceCodeAuthenticationConverter()));
+	}
+
+	public static RequestMatcher createDefaultRequestMatcher(String tokenEndpointUri) {
+		Assert.hasText(tokenEndpointUri, "tokenEndpointUri cannot be empty");
+		return new AntPathRequestMatcher(tokenEndpointUri, HttpMethod.POST.name());
 	}
 
 	@Override

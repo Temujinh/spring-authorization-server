@@ -100,13 +100,29 @@ public final class OAuth2DeviceAuthorizationEndpointFilter extends OncePerReques
 	 * @param authenticationManager the authentication manager
 	 * @param deviceAuthorizationEndpointUri the endpoint {@code URI} for device authorization requests
 	 */
-	public OAuth2DeviceAuthorizationEndpointFilter(AuthenticationManager authenticationManager, String deviceAuthorizationEndpointUri) {
+	public OAuth2DeviceAuthorizationEndpointFilter(AuthenticationManager authenticationManager,
+			String deviceAuthorizationEndpointUri) {
+		this(authenticationManager, createDefaultRequestMatcher(deviceAuthorizationEndpointUri));
+	}
+
+	/**
+	 * Constructs an {@code OAuth2DeviceAuthorizationEndpointFilter} using the provided parameters.
+	 *
+	 * @param authenticationManager the authentication manager
+	 * @param deviceAuthorizationEndpointMatcher the request matcher for device authorization requests
+	 */
+	public OAuth2DeviceAuthorizationEndpointFilter(AuthenticationManager authenticationManager,
+			RequestMatcher deviceAuthorizationEndpointMatcher) {
 		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
-		Assert.hasText(deviceAuthorizationEndpointUri, "deviceAuthorizationEndpointUri cannot be empty");
+		Assert.notNull(deviceAuthorizationEndpointMatcher, "deviceAuthorizationEndpointMatcher cannot be null");
 		this.authenticationManager = authenticationManager;
-		this.deviceAuthorizationEndpointMatcher = new AntPathRequestMatcher(deviceAuthorizationEndpointUri,
-				HttpMethod.POST.name());
+		this.deviceAuthorizationEndpointMatcher = deviceAuthorizationEndpointMatcher;
 		this.authenticationConverter = new OAuth2DeviceAuthorizationRequestAuthenticationConverter();
+	}
+
+	public static RequestMatcher createDefaultRequestMatcher(String deviceAuthorizationEndpointUri) {
+		Assert.hasText(deviceAuthorizationEndpointUri, "deviceAuthorizationEndpointUri cannot be empty");
+		return new AntPathRequestMatcher(deviceAuthorizationEndpointUri, HttpMethod.POST.name());
 	}
 
 	@Override

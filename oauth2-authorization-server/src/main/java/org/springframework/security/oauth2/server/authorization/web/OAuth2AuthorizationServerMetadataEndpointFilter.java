@@ -57,12 +57,33 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 	 */
 	private static final String DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI = "/.well-known/oauth-authorization-server";
 
-	private final RequestMatcher requestMatcher = new AntPathRequestMatcher(
-			DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI,
-			HttpMethod.GET.name());
+	private final RequestMatcher requestMatcher;
 	private final OAuth2AuthorizationServerMetadataHttpMessageConverter authorizationServerMetadataHttpMessageConverter =
 			new OAuth2AuthorizationServerMetadataHttpMessageConverter();
 	private Consumer<OAuth2AuthorizationServerMetadata.Builder> authorizationServerMetadataCustomizer = (authorizationServerMetadata) -> {};
+
+	/**
+	 * Constructs an {@code OAuth2AuthorizationServerMetadataEndpointFilter} with
+	 * the default path for Authorization Server Metadata requests
+	 */
+	public OAuth2AuthorizationServerMetadataEndpointFilter() {
+		this(createDefaultRequestMatcher());
+	}
+
+	/**
+	 * Constructs an {@code OAuth2AuthorizationServerMetadataEndpointFilter} using the provided parameters.
+	 *
+	 * @param requestMatcher the request matcher for Authorization Server Metadata requests
+	 */
+	public OAuth2AuthorizationServerMetadataEndpointFilter(RequestMatcher requestMatcher) {
+		Assert.notNull(requestMatcher, "requestMatcher cannot be null");
+		this.requestMatcher = requestMatcher;
+	}
+
+	public static RequestMatcher createDefaultRequestMatcher() {
+		return new AntPathRequestMatcher(DEFAULT_OAUTH2_AUTHORIZATION_SERVER_METADATA_ENDPOINT_URI,
+				HttpMethod.GET.name());
+	}
 
 	/**
 	 * Sets the {@code Consumer} providing access to the {@link OAuth2AuthorizationServerMetadata.Builder}

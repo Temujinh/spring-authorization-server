@@ -19,11 +19,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.function.Consumer;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.ServletServerHttpResponse;
@@ -43,6 +38,11 @@ import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 /**
  * A {@code Filter} that processes OpenID Provider Configuration Requests.
  *
@@ -60,7 +60,16 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 	private Consumer<OidcProviderConfiguration.Builder> providerConfigurationCustomizer = (providerConfiguration) -> {};
 
 	public OidcProviderConfigurationEndpointFilter(String configurationEndpointUri) {
-		requestMatcher = new AntPathRequestMatcher(configurationEndpointUri, HttpMethod.GET.name());
+		this(createDefaultRequestMatcher(configurationEndpointUri));
+	}
+
+	public OidcProviderConfigurationEndpointFilter(RequestMatcher requestMatcher) {
+		this.requestMatcher = requestMatcher;
+	}
+
+	public static RequestMatcher createDefaultRequestMatcher(String configurationEndpointUri) {
+		Assert.hasText(configurationEndpointUri, "configurationEndpointUri cannot be empty");
+		return new AntPathRequestMatcher(configurationEndpointUri, HttpMethod.GET.name());
 	}
 
 	/**
