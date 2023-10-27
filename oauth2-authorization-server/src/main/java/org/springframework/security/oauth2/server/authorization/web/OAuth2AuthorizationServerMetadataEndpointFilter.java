@@ -108,23 +108,22 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 
 		AuthorizationServerContext authorizationServerContext = AuthorizationServerContextHolder.getContext();
 		String issuer = authorizationServerContext.getIssuer();
-		AuthorizationServerSettings authorizationServerSettings = authorizationServerContext.getAuthorizationServerSettings();
 
 		OAuth2AuthorizationServerMetadata.Builder authorizationServerMetadata = OAuth2AuthorizationServerMetadata.builder()
 				.issuer(issuer)
-				.authorizationEndpoint(asUrl(issuer, authorizationServerSettings.getAuthorizationEndpoint()))
-				.deviceAuthorizationEndpoint(asUrl(issuer, authorizationServerSettings.getDeviceAuthorizationEndpoint()))
-				.tokenEndpoint(asUrl(issuer, authorizationServerSettings.getTokenEndpoint()))
+				.authorizationEndpoint(asUrl(issuer, authorizationServerContext.getAuthorizationEndpoint()))
+				.deviceAuthorizationEndpoint(asUrl(issuer, authorizationServerContext.getDeviceAuthorizationEndpoint()))
+				.tokenEndpoint(asUrl(issuer, authorizationServerContext.getTokenEndpoint()))
 				.tokenEndpointAuthenticationMethods(clientAuthenticationMethods())
-				.jwkSetUrl(asUrl(issuer, authorizationServerSettings.getJwkSetEndpoint()))
+				.jwkSetUrl(asUrl(issuer, authorizationServerContext.getJwkSetEndpoint()))
 				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
 				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
 				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
 				.grantType(AuthorizationGrantType.REFRESH_TOKEN.getValue())
 				.grantType(AuthorizationGrantType.DEVICE_CODE.getValue())
-				.tokenRevocationEndpoint(asUrl(issuer, authorizationServerSettings.getTokenRevocationEndpoint()))
+				.tokenRevocationEndpoint(asUrl(issuer, authorizationServerContext.getTokenRevocationEndpoint()))
 				.tokenRevocationEndpointAuthenticationMethods(clientAuthenticationMethods())
-				.tokenIntrospectionEndpoint(asUrl(issuer, authorizationServerSettings.getTokenIntrospectionEndpoint()))
+				.tokenIntrospectionEndpoint(asUrl(issuer, authorizationServerContext.getTokenIntrospectionEndpoint()))
 				.tokenIntrospectionEndpointAuthenticationMethods(clientAuthenticationMethods())
 				.codeChallengeMethod("S256");
 

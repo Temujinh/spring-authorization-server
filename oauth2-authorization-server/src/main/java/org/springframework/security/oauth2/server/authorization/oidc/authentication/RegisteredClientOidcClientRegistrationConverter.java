@@ -68,7 +68,7 @@ final class RegisteredClientOidcClientRegistrationConverter implements Converter
 
 		AuthorizationServerContext authorizationServerContext = AuthorizationServerContextHolder.getContext();
 		String registrationClientUri = UriComponentsBuilder.fromUriString(authorizationServerContext.getIssuer())
-				.path(authorizationServerContext.getAuthorizationServerSettings().getOidcClientRegistrationEndpoint())
+				.path(authorizationServerContext.getOidcClientRegistrationEndpoint())
 				.queryParam(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId())
 				.toUriString();
 

@@ -95,25 +95,24 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 
 		AuthorizationServerContext authorizationServerContext = AuthorizationServerContextHolder.getContext();
 		String issuer = authorizationServerContext.getIssuer();
-		AuthorizationServerSettings authorizationServerSettings = authorizationServerContext.getAuthorizationServerSettings();
 
 		OidcProviderConfiguration.Builder providerConfiguration = OidcProviderConfiguration.builder()
 				.issuer(issuer)
-				.authorizationEndpoint(asUrl(issuer, authorizationServerSettings.getAuthorizationEndpoint()))
-				.deviceAuthorizationEndpoint(asUrl(issuer, authorizationServerSettings.getDeviceAuthorizationEndpoint()))
-				.tokenEndpoint(asUrl(issuer, authorizationServerSettings.getTokenEndpoint()))
+				.authorizationEndpoint(asUrl(issuer, authorizationServerContext.getAuthorizationEndpoint()))
+				.deviceAuthorizationEndpoint(asUrl(issuer, authorizationServerContext.getDeviceAuthorizationEndpoint()))
+				.tokenEndpoint(asUrl(issuer, authorizationServerContext.getTokenEndpoint()))
 				.tokenEndpointAuthenticationMethods(clientAuthenticationMethods())
-				.jwkSetUrl(asUrl(issuer, authorizationServerSettings.getJwkSetEndpoint()))
-				.userInfoEndpoint(asUrl(issuer, authorizationServerSettings.getOidcUserInfoEndpoint()))
-				.endSessionEndpoint(asUrl(issuer, authorizationServerSettings.getOidcLogoutEndpoint()))
+				.jwkSetUrl(asUrl(issuer, authorizationServerContext.getJwkSetEndpoint()))
+				.userInfoEndpoint(asUrl(issuer, authorizationServerContext.getOidcUserInfoEndpoint()))
+				.endSessionEndpoint(asUrl(issuer, authorizationServerContext.getOidcLogoutEndpoint()))
 				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
 				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
 				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
 				.grantType(AuthorizationGrantType.REFRESH_TOKEN.getValue())
 				.grantType(AuthorizationGrantType.DEVICE_CODE.getValue())
-				.tokenRevocationEndpoint(asUrl(issuer, authorizationServerSettings.getTokenRevocationEndpoint()))
+				.tokenRevocationEndpoint(asUrl(issuer, authorizationServerContext.getTokenRevocationEndpoint()))
 				.tokenRevocationEndpointAuthenticationMethods(clientAuthenticationMethods())
-				.tokenIntrospectionEndpoint(asUrl(issuer, authorizationServerSettings.getTokenIntrospectionEndpoint()))
+				.tokenIntrospectionEndpoint(asUrl(issuer, authorizationServerContext.getTokenIntrospectionEndpoint()))
 				.tokenIntrospectionEndpointAuthenticationMethods(clientAuthenticationMethods())
 				.subjectType("public")
 				.idTokenSigningAlgorithm(SignatureAlgorithm.RS256.getName())

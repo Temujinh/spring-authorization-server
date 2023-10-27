@@ -35,10 +35,75 @@ public interface AuthorizationServerContext {
 	String getIssuer();
 
 	/**
-	 * Returns the {@link AuthorizationServerSettings}.
+	 * Returns the OAuth 2.0 Authorization endpoint.
 	 *
-	 * @return the {@link AuthorizationServerSettings}
+	 * @return the Authorization endpoint
 	 */
-	AuthorizationServerSettings getAuthorizationServerSettings();
+	String getAuthorizationEndpoint();
+
+	/**
+	 * Returns the OAuth 2.0 Device Authorization endpoint.
+	 *
+	 * @return the Device Authorization endpoint
+	 * @since 1.1
+	 */
+	String getDeviceAuthorizationEndpoint();
+
+	/**
+	 * Returns the OAuth 2.0 Device Verification endpoint.
+	 *
+	 * @return the Device Verification endpoint
+	 * @since 1.1
+	 */
+	String getDeviceVerificationEndpoint();
+
+	/**
+	 * Returns the OAuth 2.0 Token endpoint.
+	 *
+	 * @return the Token endpoint
+	 */
+	String getTokenEndpoint();
+
+	/**
+	 * Returns the JWK Set endpoint.
+	 *
+	 * @return the JWK Set endpoint
+	 */
+	String getJwkSetEndpoint();
+
+	/**
+	 * Returns the OAuth 2.0 Token Revocation endpoint.
+	 *
+	 * @return the Token Revocation endpoint
+	 */
+	String getTokenRevocationEndpoint();
+
+	/**
+	 * Returns the OAuth 2.0 Token Introspection endpoint.
+	 *
+	 * @return the Token Introspection endpoint
+	 */
+	String getTokenIntrospectionEndpoint();
+
+	/**
+	 * Returns the OpenID Connect 1.0 Client Registration endpoint.
+	 *
+	 * @return the OpenID Connect 1.0 Client Registration endpoint
+	 */
+	String getOidcClientRegistrationEndpoint();
+
+	/**
+	 * Returns the OpenID Connect 1.0 UserInfo endpoint.
+	 *
+	 * @return the OpenID Connect 1.0 UserInfo endpoint
+	 */
+	String getOidcUserInfoEndpoint();
+
+	/**
+	 * Returns the OpenID Connect 1.0 Logout endpoint.
+	 * 
+	 * @return the OpenID Connect 1.0 Logout endpoint
+	 */
+	String getOidcLogoutEndpoint();
 
 }

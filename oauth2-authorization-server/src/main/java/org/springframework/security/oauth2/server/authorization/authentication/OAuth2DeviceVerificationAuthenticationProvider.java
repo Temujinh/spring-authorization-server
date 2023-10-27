@@ -21,7 +21,6 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
@@ -40,7 +39,6 @@ import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
-import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.util.Assert;
 
 /**
@@ -146,9 +144,7 @@ public final class OAuth2DeviceVerificationAuthenticationProvider implements Aut
 			Set<String> currentAuthorizedScopes = currentAuthorizationConsent != null ?
 					currentAuthorizationConsent.getScopes() : null;
 
-			AuthorizationServerSettings authorizationServerSettings =
-					AuthorizationServerContextHolder.getContext().getAuthorizationServerSettings();
-			String deviceVerificationUri = authorizationServerSettings.getDeviceVerificationEndpoint();
+			String deviceVerificationUri = AuthorizationServerContextHolder.getContext().getDeviceVerificationEndpoint();
 
 			return new OAuth2DeviceAuthorizationConsentAuthenticationToken(deviceVerificationUri,
 					registeredClient.getClientId(), principal, deviceVerificationAuthentication.getUserCode(), state,
