@@ -24,7 +24,6 @@ import java.util.Map;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.GenericApplicationListenerAdapter;
 import org.springframework.context.event.SmartApplicationListener;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -51,7 +50,6 @@ import org.springframework.security.oauth2.server.authorization.web.NimbusJwkSet
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
@@ -88,6 +86,7 @@ public final class OAuth2AuthorizationServerConfigurer
 	private final Map<Class<? extends AbstractOAuth2Configurer>, AbstractOAuth2Configurer> configurers = createConfigurers();
 	private RequestMatcher endpointsMatcher;
 	private AuthorizationServerContextResolver authorizationServerContextResolver;
+	private RequestMatcher jwkSetRequestMatcher;
 
 
 	/**
@@ -328,8 +327,8 @@ public final class OAuth2AuthorizationServerConfigurer
 			configurer.init(httpSecurity);
 			requestMatchers.add(configurer.getRequestMatcher());
 		});
-		requestMatchers.add(new AntPathRequestMatcher(
-				authorizationServerSettings.getJwkSetEndpoint(), HttpMethod.GET.name()));
+		this.jwkSetRequestMatcher = NimbusJwkSetEndpointFilter.createDefaultRequestMatcher(authorizationServerSettings.getJwkSetEndpoint());
+		requestMatchers.add(this.jwkSetRequestMatcher);
 		this.endpointsMatcher = new OrRequestMatcher(requestMatchers);
 
 		ExceptionHandlingConfigurer<HttpSecurity> exceptionHandling = httpSecurity.getConfigurer(ExceptionHandlingConfigurer.class);
@@ -360,8 +359,8 @@ public final class OAuth2AuthorizationServerConfigurer
 
 		JWKSource<com.nimbusds.jose.proc.SecurityContext> jwkSource = OAuth2ConfigurerUtils.getJwkSource(httpSecurity);
 		if (jwkSource != null) {
-			NimbusJwkSetEndpointFilter jwkSetEndpointFilter = new NimbusJwkSetEndpointFilter(
-					jwkSource, authorizationServerSettings.getJwkSetEndpoint());
+			NimbusJwkSetEndpointFilter jwkSetEndpointFilter = new NimbusJwkSetEndpointFilter(jwkSource,
+					this.jwkSetRequestMatcher);
 			httpSecurity.addFilterBefore(postProcess(jwkSetEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 		}
 	}
