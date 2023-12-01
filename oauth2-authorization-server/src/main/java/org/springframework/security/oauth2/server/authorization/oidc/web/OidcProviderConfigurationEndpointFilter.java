@@ -19,11 +19,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.function.Consumer;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.ServletServerHttpResponse;
@@ -43,6 +38,11 @@ import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 /**
  * A {@code Filter} that processes OpenID Provider Configuration Requests.
  *
@@ -54,17 +54,14 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationRequest">4.1. OpenID Provider Configuration Request</a>
  */
 public final class OidcProviderConfigurationEndpointFilter extends OncePerRequestFilter {
-	/**
-	 * The default endpoint {@code URI} for OpenID Provider Configuration requests.
-	 */
-	private static final String DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI = "/.well-known/openid-configuration";
-
-	private final RequestMatcher requestMatcher = new AntPathRequestMatcher(
-			DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI,
-			HttpMethod.GET.name());
+	private final RequestMatcher requestMatcher;
 	private final OidcProviderConfigurationHttpMessageConverter providerConfigurationHttpMessageConverter =
 			new OidcProviderConfigurationHttpMessageConverter();
 	private Consumer<OidcProviderConfiguration.Builder> providerConfigurationCustomizer = (providerConfiguration) -> {};
+
+	public OidcProviderConfigurationEndpointFilter(String configurationEndpointUri) {
+		requestMatcher = new AntPathRequestMatcher(configurationEndpointUri, HttpMethod.GET.name());
+	}
 
 	/**
 	 * Sets the {@code Consumer} providing access to the {@link OidcProviderConfiguration.Builder}
@@ -109,7 +106,6 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 				.tokenRevocationEndpointAuthenticationMethods(clientAuthenticationMethods())
 				.tokenIntrospectionEndpoint(asUrl(issuer, authorizationServerSettings.getTokenIntrospectionEndpoint()))
 				.tokenIntrospectionEndpointAuthenticationMethods(clientAuthenticationMethods())
-				.codeChallengeMethod("S256")
 				.subjectType("public")
 				.idTokenSigningAlgorithm(SignatureAlgorithm.RS256.getName())
 				.scope(OidcScopes.OPENID);
