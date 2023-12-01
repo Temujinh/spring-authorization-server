@@ -16,20 +16,18 @@
 package org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers;
 
 import java.io.IOException;
-import java.util.function.Supplier;
+
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContext;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
+import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextResolver;
+import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
+import org.springframework.util.Assert;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContext;
-import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
-import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
-import org.springframework.security.web.util.UrlUtils;
-import org.springframework.util.Assert;
-import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * A {@code Filter} that associates the {@link AuthorizationServerContext} to the {@link AuthorizationServerContextHolder}.
@@ -41,11 +39,11 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @see AuthorizationServerSettings
  */
 final class AuthorizationServerContextFilter extends OncePerRequestFilter {
-	private final AuthorizationServerSettings authorizationServerSettings;
+	private final AuthorizationServerContextResolver authorizationServerContextResolver;
 
-	AuthorizationServerContextFilter(AuthorizationServerSettings authorizationServerSettings) {
-		Assert.notNull(authorizationServerSettings, "authorizationServerSettings cannot be null");
-		this.authorizationServerSettings = authorizationServerSettings;
+	AuthorizationServerContextFilter(AuthorizationServerContextResolver authorizationServerContextResolver) {
+		Assert.notNull(authorizationServerContextResolver, "authorizationServerContextResolver cannot be null");
+		this.authorizationServerContextResolver = authorizationServerContextResolver;
 	}
 
 	@Override
@@ -53,53 +51,12 @@ final class AuthorizationServerContextFilter extends OncePerRequestFilter {
 			throws ServletException, IOException {
 
 		try {
-			AuthorizationServerContext authorizationServerContext =
-					new DefaultAuthorizationServerContext(
-							() -> resolveIssuer(this.authorizationServerSettings, request),
-							this.authorizationServerSettings);
+			AuthorizationServerContext authorizationServerContext = authorizationServerContextResolver.resolve(request);
 			AuthorizationServerContextHolder.setContext(authorizationServerContext);
 			filterChain.doFilter(request, response);
 		} finally {
 			AuthorizationServerContextHolder.resetContext();
 		}
-	}
-
-	private static String resolveIssuer(AuthorizationServerSettings authorizationServerSettings, HttpServletRequest request) {
-		return authorizationServerSettings.getIssuer() != null ?
-				authorizationServerSettings.getIssuer() :
-				getContextPath(request);
-	}
-
-	private static String getContextPath(HttpServletRequest request) {
-		// @formatter:off
-		return UriComponentsBuilder.fromHttpUrl(UrlUtils.buildFullRequestUrl(request))
-				.replacePath(request.getContextPath())
-				.replaceQuery(null)
-				.fragment(null)
-				.build()
-				.toUriString();
-		// @formatter:on
-	}
-
-	private static final class DefaultAuthorizationServerContext implements AuthorizationServerContext {
-		private final Supplier<String> issuerSupplier;
-		private final AuthorizationServerSettings authorizationServerSettings;
-
-		private DefaultAuthorizationServerContext(Supplier<String> issuerSupplier, AuthorizationServerSettings authorizationServerSettings) {
-			this.issuerSupplier = issuerSupplier;
-			this.authorizationServerSettings = authorizationServerSettings;
-		}
-
-		@Override
-		public String getIssuer() {
-			return this.issuerSupplier.get();
-		}
-
-		@Override
-		public AuthorizationServerSettings getAuthorizationServerSettings() {
-			return this.authorizationServerSettings;
-		}
-
 	}
 
 }
