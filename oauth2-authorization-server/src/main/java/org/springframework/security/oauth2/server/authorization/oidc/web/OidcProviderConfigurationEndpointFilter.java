@@ -60,7 +60,16 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 	private Consumer<OidcProviderConfiguration.Builder> providerConfigurationCustomizer = (providerConfiguration) -> {};
 
 	public OidcProviderConfigurationEndpointFilter(String configurationEndpointUri) {
-		requestMatcher = new AntPathRequestMatcher(configurationEndpointUri, HttpMethod.GET.name());
+		this(createDefaultRequestMatcher(configurationEndpointUri));
+	}
+
+	public OidcProviderConfigurationEndpointFilter(RequestMatcher requestMatcher) {
+		this.requestMatcher = requestMatcher;
+	}
+
+	public static RequestMatcher createDefaultRequestMatcher(String configurationEndpointUri) {
+		Assert.hasText(configurationEndpointUri, "configurationEndpointUri cannot be empty");
+		return new AntPathRequestMatcher(configurationEndpointUri, HttpMethod.GET.name());
 	}
 
 	/**

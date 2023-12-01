@@ -116,18 +116,32 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 	 * @param authenticationManager the authentication manager
 	 * @param authorizationEndpointUri the endpoint {@code URI} for authorization requests
 	 */
-	public OAuth2AuthorizationEndpointFilter(AuthenticationManager authenticationManager, String authorizationEndpointUri) {
+	public OAuth2AuthorizationEndpointFilter(AuthenticationManager authenticationManager,
+			String authorizationEndpointUri) {
+		this(authenticationManager, createDefaultRequestMatcher(authorizationEndpointUri));
+	}
+
+	/**
+	 * Constructs an {@code OAuth2AuthorizationEndpointFilter} using the provided
+	 * parameters.
+	 *
+	 * @param authenticationManager        the authentication manager
+	 * @param authorizationEndpointMatcher the request matcher for authorization
+	 *                                     requests
+	 */
+	public OAuth2AuthorizationEndpointFilter(AuthenticationManager authenticationManager,
+			RequestMatcher authorizationEndpointMatcher) {
 		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
-		Assert.hasText(authorizationEndpointUri, "authorizationEndpointUri cannot be empty");
+		Assert.notNull(authorizationEndpointMatcher, "authorizationEndpointMatcher cannot be null");
 		this.authenticationManager = authenticationManager;
-		this.authorizationEndpointMatcher = createDefaultRequestMatcher(authorizationEndpointUri);
+		this.authorizationEndpointMatcher = authorizationEndpointMatcher;
 		this.authenticationConverter = new DelegatingAuthenticationConverter(
-				Arrays.asList(
-						new OAuth2AuthorizationCodeRequestAuthenticationConverter(),
+				Arrays.asList(new OAuth2AuthorizationCodeRequestAuthenticationConverter(),
 						new OAuth2AuthorizationConsentAuthenticationConverter()));
 	}
 
-	private static RequestMatcher createDefaultRequestMatcher(String authorizationEndpointUri) {
+	public static RequestMatcher createDefaultRequestMatcher(String authorizationEndpointUri) {
+		Assert.hasText(authorizationEndpointUri, "authorizationEndpointUri cannot be empty");
 		RequestMatcher authorizationRequestGetMatcher = new AntPathRequestMatcher(
 				authorizationEndpointUri, HttpMethod.GET.name());
 		RequestMatcher authorizationRequestPostMatcher = new AntPathRequestMatcher(

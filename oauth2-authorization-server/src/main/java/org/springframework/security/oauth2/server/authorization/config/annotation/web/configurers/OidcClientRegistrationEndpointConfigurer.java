@@ -19,9 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import jakarta.servlet.http.HttpServletRequest;
-
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
@@ -41,10 +38,10 @@ import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Configurer for OpenID Connect 1.0 Dynamic Client Registration Endpoint.
@@ -161,10 +158,7 @@ public final class OidcClientRegistrationEndpointConfigurer extends AbstractOAut
 	void init(HttpSecurity httpSecurity) {
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
 		String clientRegistrationEndpointUri = authorizationServerSettings.getOidcClientRegistrationEndpoint();
-		this.requestMatcher = new OrRequestMatcher(
-				new AntPathRequestMatcher(clientRegistrationEndpointUri, HttpMethod.POST.name()),
-				new AntPathRequestMatcher(clientRegistrationEndpointUri, HttpMethod.GET.name())
-		);
+		this.requestMatcher = OidcClientRegistrationEndpointFilter.createDefaultRequestMatcher(clientRegistrationEndpointUri);
 
 		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(httpSecurity);
 		if (!this.authenticationProviders.isEmpty()) {
@@ -178,12 +172,9 @@ public final class OidcClientRegistrationEndpointConfigurer extends AbstractOAut
 	@Override
 	void configure(HttpSecurity httpSecurity) {
 		AuthenticationManager authenticationManager = httpSecurity.getSharedObject(AuthenticationManager.class);
-		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
 
-		OidcClientRegistrationEndpointFilter oidcClientRegistrationEndpointFilter =
-				new OidcClientRegistrationEndpointFilter(
-						authenticationManager,
-						authorizationServerSettings.getOidcClientRegistrationEndpoint());
+		OidcClientRegistrationEndpointFilter oidcClientRegistrationEndpointFilter = new OidcClientRegistrationEndpointFilter(
+				authenticationManager, getRequestMatcher());
 		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters();
 		if (!this.clientRegistrationRequestConverters.isEmpty()) {
 			authenticationConverters.addAll(0, this.clientRegistrationRequestConverters);

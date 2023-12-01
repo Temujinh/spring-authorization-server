@@ -24,12 +24,14 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.core.log.LogMessage;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2DeviceCode;
@@ -38,11 +40,11 @@ import org.springframework.security.oauth2.core.OAuth2UserCode;
 import org.springframework.security.oauth2.core.endpoint.OAuth2DeviceAuthorizationResponse;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.http.converter.OAuth2DeviceAuthorizationResponseHttpMessageConverter;
+import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2DeviceAuthorizationRequestAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2DeviceAuthorizationRequestAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2DeviceAuthorizationRequestAuthenticationConverter;
-import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2ErrorAuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -74,11 +76,13 @@ public final class OAuth2DeviceAuthorizationEndpointFilter extends OncePerReques
 	private final RequestMatcher deviceAuthorizationEndpointMatcher;
 	private final HttpMessageConverter<OAuth2DeviceAuthorizationResponse> deviceAuthorizationHttpResponseConverter =
 			new OAuth2DeviceAuthorizationResponseHttpMessageConverter();
+	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter =
+			new OAuth2ErrorHttpMessageConverter();
 	private AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource =
 			new WebAuthenticationDetailsSource();
 	private AuthenticationConverter authenticationConverter;
 	private AuthenticationSuccessHandler authenticationSuccessHandler = this::sendDeviceAuthorizationResponse;
-	private AuthenticationFailureHandler authenticationFailureHandler = new OAuth2ErrorAuthenticationFailureHandler();
+	private AuthenticationFailureHandler authenticationFailureHandler = this::sendErrorResponse;
 	private String verificationUri = OAuth2DeviceVerificationEndpointFilter.DEFAULT_DEVICE_VERIFICATION_ENDPOINT_URI;
 
 	/**
@@ -96,13 +100,29 @@ public final class OAuth2DeviceAuthorizationEndpointFilter extends OncePerReques
 	 * @param authenticationManager the authentication manager
 	 * @param deviceAuthorizationEndpointUri the endpoint {@code URI} for device authorization requests
 	 */
-	public OAuth2DeviceAuthorizationEndpointFilter(AuthenticationManager authenticationManager, String deviceAuthorizationEndpointUri) {
+	public OAuth2DeviceAuthorizationEndpointFilter(AuthenticationManager authenticationManager,
+			String deviceAuthorizationEndpointUri) {
+		this(authenticationManager, createDefaultRequestMatcher(deviceAuthorizationEndpointUri));
+	}
+
+	/**
+	 * Constructs an {@code OAuth2DeviceAuthorizationEndpointFilter} using the provided parameters.
+	 *
+	 * @param authenticationManager the authentication manager
+	 * @param deviceAuthorizationEndpointMatcher the request matcher for device authorization requests
+	 */
+	public OAuth2DeviceAuthorizationEndpointFilter(AuthenticationManager authenticationManager,
+			RequestMatcher deviceAuthorizationEndpointMatcher) {
 		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
-		Assert.hasText(deviceAuthorizationEndpointUri, "deviceAuthorizationEndpointUri cannot be empty");
+		Assert.notNull(deviceAuthorizationEndpointMatcher, "deviceAuthorizationEndpointMatcher cannot be null");
 		this.authenticationManager = authenticationManager;
-		this.deviceAuthorizationEndpointMatcher = new AntPathRequestMatcher(deviceAuthorizationEndpointUri,
-				HttpMethod.POST.name());
+		this.deviceAuthorizationEndpointMatcher = deviceAuthorizationEndpointMatcher;
 		this.authenticationConverter = new OAuth2DeviceAuthorizationRequestAuthenticationConverter();
+	}
+
+	public static RequestMatcher createDefaultRequestMatcher(String deviceAuthorizationEndpointUri) {
+		Assert.hasText(deviceAuthorizationEndpointUri, "deviceAuthorizationEndpointUri cannot be empty");
+		return new AntPathRequestMatcher(deviceAuthorizationEndpointUri, HttpMethod.POST.name());
 	}
 
 	@Override
@@ -219,6 +239,15 @@ public final class OAuth2DeviceAuthorizationEndpointFilter extends OncePerReques
 
 		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
 		this.deviceAuthorizationHttpResponseConverter.write(deviceAuthorizationResponse, null, httpResponse);
+	}
+
+	private void sendErrorResponse(HttpServletRequest request, HttpServletResponse response,
+			AuthenticationException authenticationException) throws IOException {
+
+		OAuth2Error error = ((OAuth2AuthenticationException) authenticationException).getError();
+		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
+		httpResponse.setStatusCode(HttpStatus.BAD_REQUEST);
+		this.errorHttpResponseConverter.write(error, null, httpResponse);
 	}
 
 }

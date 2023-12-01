@@ -19,9 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import jakarta.servlet.http.HttpServletRequest;
-
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
@@ -45,11 +42,11 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Configurer for the OAuth 2.0 Authorization Endpoint.
@@ -208,33 +205,26 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 
 	@Override
 	void init(HttpSecurity httpSecurity) {
-		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
-		this.requestMatcher = new OrRequestMatcher(
-				new AntPathRequestMatcher(
-						authorizationServerSettings.getAuthorizationEndpoint(),
-						HttpMethod.GET.name()),
-				new AntPathRequestMatcher(
-						authorizationServerSettings.getAuthorizationEndpoint(),
-						HttpMethod.POST.name()));
+		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils
+				.getAuthorizationServerSettings(httpSecurity);
+		this.requestMatcher = OAuth2AuthorizationEndpointFilter
+				.createDefaultRequestMatcher(authorizationServerSettings.getAuthorizationEndpoint());
 
 		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(httpSecurity);
 		if (!this.authenticationProviders.isEmpty()) {
 			authenticationProviders.addAll(0, this.authenticationProviders);
 		}
 		this.authenticationProvidersConsumer.accept(authenticationProviders);
-		authenticationProviders.forEach(authenticationProvider ->
-				httpSecurity.authenticationProvider(postProcess(authenticationProvider)));
+		authenticationProviders.forEach(
+				authenticationProvider -> httpSecurity.authenticationProvider(postProcess(authenticationProvider)));
 	}
 
 	@Override
 	void configure(HttpSecurity httpSecurity) {
 		AuthenticationManager authenticationManager = httpSecurity.getSharedObject(AuthenticationManager.class);
-		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
 
-		OAuth2AuthorizationEndpointFilter authorizationEndpointFilter =
-				new OAuth2AuthorizationEndpointFilter(
-						authenticationManager,
-						authorizationServerSettings.getAuthorizationEndpoint());
+		OAuth2AuthorizationEndpointFilter authorizationEndpointFilter = new OAuth2AuthorizationEndpointFilter(
+				authenticationManager, getRequestMatcher());
 		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters();
 		if (!this.authorizationRequestConverters.isEmpty()) {
 			authenticationConverters.addAll(0, this.authorizationRequestConverters);

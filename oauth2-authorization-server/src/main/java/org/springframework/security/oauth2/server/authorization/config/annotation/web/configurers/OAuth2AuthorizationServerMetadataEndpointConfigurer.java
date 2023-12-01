@@ -17,13 +17,11 @@ package org.springframework.security.oauth2.server.authorization.config.annotati
 
 import java.util.function.Consumer;
 
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationServerMetadata;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationServerMetadataEndpointFilter;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
 /**
@@ -47,11 +45,11 @@ public final class OAuth2AuthorizationServerMetadataEndpointConfigurer extends A
 	}
 
 	/**
-     * Sets the {@code Consumer} providing access to the {@link OAuth2AuthorizationServerMetadata.Builder}
+	 * Sets the {@code Consumer} providing access to the {@link OAuth2AuthorizationServerMetadata.Builder}
 	 * allowing the ability to customize the claims of the Authorization Server's configuration.
 	 *
 	 * @param authorizationServerMetadataCustomizer the {@code Consumer} providing access to the {@link OAuth2AuthorizationServerMetadata.Builder}
-     * @return the {@link OAuth2AuthorizationServerMetadataEndpointConfigurer} for further configuration
+	 * @return the {@link OAuth2AuthorizationServerMetadataEndpointConfigurer} for further configuration
 	 */
 	public OAuth2AuthorizationServerMetadataEndpointConfigurer authorizationServerMetadataCustomizer(
 			Consumer<OAuth2AuthorizationServerMetadata.Builder> authorizationServerMetadataCustomizer) {
@@ -69,14 +67,13 @@ public final class OAuth2AuthorizationServerMetadataEndpointConfigurer extends A
 
 	@Override
 	void init(HttpSecurity httpSecurity) {
-		this.requestMatcher = new AntPathRequestMatcher(
-				"/.well-known/oauth-authorization-server", HttpMethod.GET.name());
+		this.requestMatcher = OAuth2AuthorizationServerMetadataEndpointFilter.createDefaultRequestMatcher();
 	}
 
 	@Override
 	void configure(HttpSecurity httpSecurity) {
-		OAuth2AuthorizationServerMetadataEndpointFilter authorizationServerMetadataEndpointFilter =
-				new OAuth2AuthorizationServerMetadataEndpointFilter();
+		OAuth2AuthorizationServerMetadataEndpointFilter authorizationServerMetadataEndpointFilter = new OAuth2AuthorizationServerMetadataEndpointFilter(
+				getRequestMatcher());
 		Consumer<OAuth2AuthorizationServerMetadata.Builder> authorizationServerMetadataCustomizer = getAuthorizationServerMetadataCustomizer();
 		if (authorizationServerMetadataCustomizer != null) {
 			authorizationServerMetadataEndpointFilter.setAuthorizationServerMetadataCustomizer(authorizationServerMetadataCustomizer);

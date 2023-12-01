@@ -186,7 +186,7 @@ public final class OAuth2ClientAuthenticationConfigurer extends AbstractOAuth2Co
 	void configure(HttpSecurity httpSecurity) {
 		AuthenticationManager authenticationManager = httpSecurity.getSharedObject(AuthenticationManager.class);
 		OAuth2ClientAuthenticationFilter clientAuthenticationFilter = new OAuth2ClientAuthenticationFilter(
-				authenticationManager, this.requestMatcher);
+				authenticationManager, getRequestMatcher());
 		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters();
 		if (!this.authenticationConverters.isEmpty()) {
 			authenticationConverters.addAll(0, this.authenticationConverters);

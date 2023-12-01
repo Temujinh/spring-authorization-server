@@ -19,14 +19,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.function.Consumer;
 
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.server.authorization.oidc.OidcProviderConfiguration;
 import org.springframework.security.oauth2.server.authorization.oidc.web.OidcProviderConfigurationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.StringUtils;
 
@@ -77,14 +75,14 @@ public final class OidcProviderConfigurationEndpointConfigurer extends AbstractO
 
 	@Override
 	void init(HttpSecurity httpSecurity) {
-		this.requestMatcher = new AntPathRequestMatcher(
-				getConfigurationEndpointUri(httpSecurity), HttpMethod.GET.name());
+		this.requestMatcher = OidcProviderConfigurationEndpointFilter
+				.createDefaultRequestMatcher(getConfigurationEndpointUri(httpSecurity));
 	}
 
 	@Override
 	void configure(HttpSecurity httpSecurity) {
-		OidcProviderConfigurationEndpointFilter oidcProviderConfigurationEndpointFilter =
-				new OidcProviderConfigurationEndpointFilter(getConfigurationEndpointUri(httpSecurity));
+		OidcProviderConfigurationEndpointFilter oidcProviderConfigurationEndpointFilter = new OidcProviderConfigurationEndpointFilter(
+				getRequestMatcher());
 		Consumer<OidcProviderConfiguration.Builder> providerConfigurationCustomizer = getProviderConfigurationCustomizer();
 		if (providerConfigurationCustomizer != null) {
 			oidcProviderConfigurationEndpointFilter.setProviderConfigurationCustomizer(providerConfigurationCustomizer);

@@ -96,17 +96,32 @@ public final class OidcLogoutEndpointFilter extends OncePerRequestFilter {
 	 */
 	public OidcLogoutEndpointFilter(AuthenticationManager authenticationManager,
 			String logoutEndpointUri) {
+		this(authenticationManager, createDefaultRequestMatcher(logoutEndpointUri));
+	}
+
+	/**
+	 * Constructs an {@code OidcLogoutEndpointFilter} using the provided parameters.
+	 *
+	 * @param authenticationManager the authentication manager
+	 * @param logoutEndpointMatcher the request matcher for OpenID Connect 1.0 RP-Initiated Logout Requests
+	 */
+	public OidcLogoutEndpointFilter(AuthenticationManager authenticationManager,
+			RequestMatcher logoutEndpointMatcher) {
 		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
-		Assert.hasText(logoutEndpointUri, "logoutEndpointUri cannot be empty");
+		Assert.notNull(logoutEndpointMatcher, "logoutEndpointMatcher cannot be null");
 		this.authenticationManager = authenticationManager;
-		this.logoutEndpointMatcher = new OrRequestMatcher(
-				new AntPathRequestMatcher(logoutEndpointUri, HttpMethod.GET.name()),
-				new AntPathRequestMatcher(logoutEndpointUri, HttpMethod.POST.name()));
+		this.logoutEndpointMatcher = logoutEndpointMatcher;
 		this.logoutHandler = new SecurityContextLogoutHandler();
 		SimpleUrlLogoutSuccessHandler urlLogoutSuccessHandler = new SimpleUrlLogoutSuccessHandler();
 		urlLogoutSuccessHandler.setDefaultTargetUrl("/");
 		this.logoutSuccessHandler = urlLogoutSuccessHandler;
 		this.authenticationConverter = new OidcLogoutAuthenticationConverter();
+	}
+
+	public static RequestMatcher createDefaultRequestMatcher(String logoutEndpointUri) {
+		Assert.hasText(logoutEndpointUri, "logoutEndpointUri cannot be empty");
+		return new OrRequestMatcher(new AntPathRequestMatcher(logoutEndpointUri, HttpMethod.GET.name()),
+				new AntPathRequestMatcher(logoutEndpointUri, HttpMethod.POST.name()));
 	}
 
 	@Override

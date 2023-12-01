@@ -52,6 +52,7 @@ import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import static java.util.Map.entry;
@@ -106,8 +107,17 @@ public class OAuth2DeviceVerificationEndpointFilterTests {
 	public void constructorWhenDeviceVerificationEndpointUriIsNullThenThrowIllegalArgumentException() {
 		// @formatter:off
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new OAuth2DeviceVerificationEndpointFilter(this.authenticationManager, null))
+				.isThrownBy(() -> new OAuth2DeviceVerificationEndpointFilter(this.authenticationManager, (String) null))
 				.withMessage("deviceVerificationEndpointUri cannot be empty");
+		// @formatter:on
+	}
+
+	@Test
+	public void constructorWhenDeviceVerificationEndpointMatcherIsNullThenThrowIllegalArgumentException() {
+		// @formatter:off
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> new OAuth2DeviceVerificationEndpointFilter(this.authenticationManager, (RequestMatcher) null))
+				.withMessage("deviceVerificationEndpointMatcher cannot be null");
 		// @formatter:on
 	}
 

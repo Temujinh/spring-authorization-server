@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,18 +24,20 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.core.log.LogMessage;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenIntrospection;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenIntrospectionAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenIntrospectionAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.http.converter.OAuth2TokenIntrospectionHttpMessageConverter;
-import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2ErrorAuthenticationFailureHandler;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2TokenIntrospectionAuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -67,8 +69,9 @@ public final class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequest
 	private AuthenticationConverter authenticationConverter;
 	private final HttpMessageConverter<OAuth2TokenIntrospection> tokenIntrospectionHttpResponseConverter =
 			new OAuth2TokenIntrospectionHttpMessageConverter();
+	private final HttpMessageConverter<OAuth2Error> errorHttpResponseConverter = new OAuth2ErrorHttpMessageConverter();
 	private AuthenticationSuccessHandler authenticationSuccessHandler = this::sendIntrospectionResponse;
-	private AuthenticationFailureHandler authenticationFailureHandler = new OAuth2ErrorAuthenticationFailureHandler();
+	private AuthenticationFailureHandler authenticationFailureHandler = this::sendErrorResponse;
 
 	/**
 	 * Constructs an {@code OAuth2TokenIntrospectionEndpointFilter} using the provided parameters.
@@ -87,12 +90,27 @@ public final class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequest
 	 */
 	public OAuth2TokenIntrospectionEndpointFilter(AuthenticationManager authenticationManager,
 			String tokenIntrospectionEndpointUri) {
+		this(authenticationManager, createDefaultRequestMatcher(tokenIntrospectionEndpointUri));
+	}
+
+	/**
+	 * Constructs an {@code OAuth2TokenIntrospectionEndpointFilter} using the provided parameters.
+	 *
+	 * @param authenticationManager the authentication manager
+	 * @param tokenIntrospectionEndpointMatcher the request matcher for token introspection requests
+	 */
+	public OAuth2TokenIntrospectionEndpointFilter(AuthenticationManager authenticationManager,
+			RequestMatcher tokenIntrospectionEndpointMatcher) {
 		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
-		Assert.hasText(tokenIntrospectionEndpointUri, "tokenIntrospectionEndpointUri cannot be empty");
+		Assert.notNull(tokenIntrospectionEndpointMatcher, "tokenIntrospectionEndpointMatcher cannot be null");
 		this.authenticationManager = authenticationManager;
-		this.tokenIntrospectionEndpointMatcher = new AntPathRequestMatcher(
-				tokenIntrospectionEndpointUri, HttpMethod.POST.name());
+		this.tokenIntrospectionEndpointMatcher = tokenIntrospectionEndpointMatcher;
 		this.authenticationConverter = new OAuth2TokenIntrospectionAuthenticationConverter();
+	}
+
+	public static RequestMatcher createDefaultRequestMatcher(String tokenIntrospectionEndpointUri) {
+		Assert.hasText(tokenIntrospectionEndpointUri, "tokenIntrospectionEndpointUri cannot be empty");
+		return new AntPathRequestMatcher(tokenIntrospectionEndpointUri, HttpMethod.POST.name());
 	}
 
 	@Override
@@ -161,6 +179,14 @@ public final class OAuth2TokenIntrospectionEndpointFilter extends OncePerRequest
 		OAuth2TokenIntrospection tokenClaims = tokenIntrospectionAuthentication.getTokenClaims();
 		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
 		this.tokenIntrospectionHttpResponseConverter.write(tokenClaims, null, httpResponse);
+	}
+
+	private void sendErrorResponse(HttpServletRequest request, HttpServletResponse response,
+			AuthenticationException exception) throws IOException {
+		OAuth2Error error = ((OAuth2AuthenticationException) exception).getError();
+		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
+		httpResponse.setStatusCode(HttpStatus.BAD_REQUEST);
+		this.errorHttpResponseConverter.write(error, null, httpResponse);
 	}
 
 }

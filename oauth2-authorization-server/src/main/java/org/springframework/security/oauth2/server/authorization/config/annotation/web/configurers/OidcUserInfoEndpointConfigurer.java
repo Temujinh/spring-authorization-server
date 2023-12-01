@@ -20,9 +20,6 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import jakarta.servlet.http.HttpServletRequest;
-
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
@@ -44,10 +41,10 @@ import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Configurer for OpenID Connect 1.0 UserInfo Endpoint.
@@ -186,9 +183,7 @@ public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configur
 	void init(HttpSecurity httpSecurity) {
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
 		String userInfoEndpointUri = authorizationServerSettings.getOidcUserInfoEndpoint();
-		this.requestMatcher = new OrRequestMatcher(
-				new AntPathRequestMatcher(userInfoEndpointUri, HttpMethod.GET.name()),
-				new AntPathRequestMatcher(userInfoEndpointUri, HttpMethod.POST.name()));
+		this.requestMatcher = OidcUserInfoEndpointFilter.createDefaultRequestMatcher(userInfoEndpointUri);
 
 		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(httpSecurity);
 		if (!this.authenticationProviders.isEmpty()) {
@@ -202,12 +197,9 @@ public final class OidcUserInfoEndpointConfigurer extends AbstractOAuth2Configur
 	@Override
 	void configure(HttpSecurity httpSecurity) {
 		AuthenticationManager authenticationManager = httpSecurity.getSharedObject(AuthenticationManager.class);
-		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
 
-		OidcUserInfoEndpointFilter oidcUserInfoEndpointFilter =
-				new OidcUserInfoEndpointFilter(
-						authenticationManager,
-						authorizationServerSettings.getOidcUserInfoEndpoint());
+		OidcUserInfoEndpointFilter oidcUserInfoEndpointFilter = new OidcUserInfoEndpointFilter(authenticationManager,
+				getRequestMatcher());
 		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters();
 		if (!this.userInfoRequestConverters.isEmpty()) {
 			authenticationConverters.addAll(0, this.userInfoRequestConverters);
