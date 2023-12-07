@@ -71,8 +71,53 @@ public class DefaultAuthorizationServerContextResolver implements AuthorizationS
 		}
 
 		@Override
-		public AuthorizationServerSettings getAuthorizationServerSettings() {
-			return this.authorizationServerSettings;
+		public String getAuthorizationEndpoint() {
+			return authorizationServerSettings.getAuthorizationEndpoint();
+		}
+
+		@Override
+		public String getDeviceAuthorizationEndpoint() {
+			return authorizationServerSettings.getDeviceAuthorizationEndpoint();
+		}
+
+		@Override
+		public String getDeviceVerificationEndpoint() {
+			return authorizationServerSettings.getDeviceVerificationEndpoint();
+		}
+
+		@Override
+		public String getTokenEndpoint() {
+			return authorizationServerSettings.getTokenEndpoint();
+		}
+
+		@Override
+		public String getJwkSetEndpoint() {
+			return authorizationServerSettings.getJwkSetEndpoint();
+		}
+
+		@Override
+		public String getTokenRevocationEndpoint() {
+			return authorizationServerSettings.getTokenRevocationEndpoint();
+		}
+
+		@Override
+		public String getTokenIntrospectionEndpoint() {
+			return authorizationServerSettings.getTokenIntrospectionEndpoint();
+		}
+
+		@Override
+		public String getOidcClientRegistrationEndpoint() {
+			return authorizationServerSettings.getOidcClientRegistrationEndpoint();
+		}
+
+		@Override
+		public String getOidcUserInfoEndpoint() {
+			return authorizationServerSettings.getOidcUserInfoEndpoint();
+		}
+
+		@Override
+		public String getOidcLogoutEndpoint() {
+			return authorizationServerSettings.getOidcLogoutEndpoint();
 		}
 
 	}

@@ -48,7 +48,6 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContext;
 import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
-import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -194,12 +193,11 @@ public final class JwtClientAssertionDecoderFactory implements JwtDecoderFactory
 			return Collections.emptyList();
 		}
 
-		AuthorizationServerSettings authorizationServerSettings = authorizationServerContext.getAuthorizationServerSettings();
 		List<String> audience = new ArrayList<>();
 		audience.add(authorizationServerContext.getIssuer());
-		audience.add(asUrl(authorizationServerContext.getIssuer(), authorizationServerSettings.getTokenEndpoint()));
-		audience.add(asUrl(authorizationServerContext.getIssuer(), authorizationServerSettings.getTokenIntrospectionEndpoint()));
-		audience.add(asUrl(authorizationServerContext.getIssuer(), authorizationServerSettings.getTokenRevocationEndpoint()));
+		audience.add(asUrl(authorizationServerContext.getIssuer(), authorizationServerContext.getTokenEndpoint()));
+		audience.add(asUrl(authorizationServerContext.getIssuer(), authorizationServerContext.getTokenIntrospectionEndpoint()));
+		audience.add(asUrl(authorizationServerContext.getIssuer(), authorizationServerContext.getTokenRevocationEndpoint()));
 		return audience;
 	}
 

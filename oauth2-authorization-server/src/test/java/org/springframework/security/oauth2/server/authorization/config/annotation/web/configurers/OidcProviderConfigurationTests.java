@@ -15,11 +15,17 @@
  */
 package org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -46,13 +52,6 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultMatcher;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.hamcrest.CoreMatchers.hasItems;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 /**
  * Integration tests for the OpenID Connect 1.0 Provider Configuration endpoint.
  *
@@ -62,8 +61,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @ExtendWith(SpringTestContextExtension.class)
 public class OidcProviderConfigurationTests {
-	private static final String ISSUER1_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI = "/issuer1/.well-known/openid-configuration";
-	private static final String ISSUER_URL = "https://example.com/issuer1";
+	private static final String DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI = "/.well-known/openid-configuration";
+
+	private static final String ISSUER_PATH = "/issuer1";
+
+	private static final String ISSUER_URL = "https://example.com" + ISSUER_PATH;
 
 	public final SpringTestContext spring = new SpringTestContext();
 
@@ -77,7 +79,7 @@ public class OidcProviderConfigurationTests {
 	public void requestWhenConfigurationRequestAndIssuerSetThenReturnDefaultConfigurationResponse() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
-		this.mvc.perform(get(ISSUER1_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI))
+		this.mvc.perform(get(ISSUER_PATH + DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI))
 				.andExpect(status().is2xxSuccessful())
 				.andExpectAll(defaultConfigurationMatchers());
 	}
@@ -87,8 +89,8 @@ public class OidcProviderConfigurationTests {
 	public void requestWhenConfigurationRequestAndUserAuthenticatedThenReturnConfigurationResponse() throws Exception {
 		this.spring.register(AuthorizationServerConfiguration.class).autowire();
 
-		this.mvc.perform(get(ISSUER1_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI)
-						.with(user("user")))
+		this.mvc.perform(get(ISSUER_PATH + DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI)
+				.with(user("user")))
 				.andExpect(status().is2xxSuccessful())
 				.andExpectAll(defaultConfigurationMatchers());
 	}
@@ -98,7 +100,7 @@ public class OidcProviderConfigurationTests {
 	public void requestWhenConfigurationRequestAndConfigurationCustomizerSetThenReturnCustomConfigurationResponse() throws Exception {
 		this.spring.register(AuthorizationServerConfigurationWithProviderConfigurationCustomizer.class).autowire();
 
-		this.mvc.perform(get(ISSUER1_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI))
+		this.mvc.perform(get(ISSUER_PATH + DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI))
 				.andExpect(status().is2xxSuccessful())
 				.andExpect(jsonPath(OAuth2AuthorizationServerMetadataClaimNames.SCOPES_SUPPORTED,
 						hasItems(OidcScopes.OPENID, OidcScopes.PROFILE, OidcScopes.EMAIL)));
@@ -108,7 +110,7 @@ public class OidcProviderConfigurationTests {
 	public void requestWhenConfigurationRequestAndClientRegistrationEnabledThenConfigurationResponseIncludesRegistrationEndpoint() throws Exception {
 		this.spring.register(AuthorizationServerConfigurationWithClientRegistrationEnabled.class).autowire();
 
-		this.mvc.perform(get(ISSUER1_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI))
+		this.mvc.perform(get(ISSUER_PATH + DEFAULT_OIDC_PROVIDER_CONFIGURATION_ENDPOINT_URI))
 				.andExpect(status().is2xxSuccessful())
 				.andExpectAll(defaultConfigurationMatchers())
 				.andExpect(jsonPath("$.registration_endpoint").value(ISSUER_URL.concat(this.authorizationServerSettings.getOidcClientRegistrationEndpoint())));
